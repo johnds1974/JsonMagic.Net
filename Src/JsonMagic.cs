@@ -56,8 +56,11 @@ namespace Sdr.JsonMagic
                     }
                 }
 
-
-                if(type.IsClass || (type.IsGenericType))
+                if (type.IsArray)
+                {
+                    sb.Append("[");
+                }
+                else if (type.IsClass || (type.IsGenericType))
                 {
                     if (o is string)
                     {
@@ -75,10 +78,6 @@ namespace Sdr.JsonMagic
                                 "{{\"$type\": \"{0}\", \"$id\": {1},", GetShortTypeName(type), _refsDict[o]));
                         }
                     }
-                }
-                else if (type.IsArray)
-                {
-                    sb.Append("[");
                 }
                 else if (type.IsValueType)
                 {
@@ -159,7 +158,11 @@ namespace Sdr.JsonMagic
                 }
 
 
-                if(type.IsClass)
+                if (type.IsArray)
+                {
+                    sb.Append("]");
+                }
+                else if (type.IsClass)
                 {
                     if (o is string)
                     {
@@ -169,10 +172,6 @@ namespace Sdr.JsonMagic
                     {
                         sb.Append("}");
                     }
-                }
-                else if (type.IsArray)
-                {
-                    sb.Append("]");
                 }
                 else if (type.IsValueType)
                 {
@@ -184,6 +183,7 @@ namespace Sdr.JsonMagic
                         sb.Append("}");
                     }
                 }
+
 
             }
 

@@ -31,13 +31,13 @@ namespace SimpleTest
 
                 string j;
 
+                j = JsonMagic.ToJson(new int[] { 10, 20, 30 });
+
                 j = JsonMagic.ToJson(new List<int> { 1, 2, 3, 4 });
 
                 j = JsonMagic.ToJson(model);
 
                 j = JsonMagic.ToJson("Hello");
-
-                j = JsonMagic.ToJson(new[] { 10, 20, 30 });
 
 /*
                 var json = JsonConvert.SerializeObject(model, Formatting.Indented, new JsonSerializerSettings
