@@ -37,7 +37,21 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Src\IJArray.cs" />
+    <Compile Include="Src\IJBoolean.cs" />
+    <Compile Include="Src\IJDouble.cs" />
+    <Compile Include="Src\IJInteger.cs" />
+    <Compile Include="Src\IJNull.cs" />
+    <Compile Include="Src\IJObject.cs" />
+    <Compile Include="Src\IJsonObjectRoot.cs" />
+    <Compile Include="Src\IJString.cs" />
+    <Compile Include="Src\JArray.cs" />
+    <Compile Include="Src\JBoolean.cs" />
+    <Compile Include="Src\JNull.cs" />
+    <Compile Include="Src\JObject.cs" />
+    <Compile Include="Src\JObjectType.cs" />
     <Compile Include="Src\JsonMagic.cs" />
+    <Compile Include="Src\JString.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

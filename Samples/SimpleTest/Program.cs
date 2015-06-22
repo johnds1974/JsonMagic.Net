@@ -30,10 +30,13 @@ namespace SimpleTest
                 model.AddEntity(pt2);
 
                 string j;
+                object o;
 
-                j = JsonMagic.ToJson(new int[] { 10, 20, 30 });
+                j = JsonMagic.ToJson(new [] { 10, 20, 30 });
+                o = JsonMagic.FromJson(j);
 
                 j = JsonMagic.ToJson(new List<int> { 1, 2, 3, 4 });
+                o = JsonMagic.FromJson(j);
 
                 j = JsonMagic.ToJson(model);
 

@@ -232,18 +232,144 @@ namespace Sdr.JsonMagic
         {
             if (!string.IsNullOrEmpty(json))
             {
-                // Check if we are a string...
-                if (json.StartsWith("\"") && json.EndsWith("\""))
-                {
-                    return json.Substring(1, json.Length - 1) as T;
-                }
-                else if (json.StartsWith("{") && json.EndsWith("}"))
-                {
-                    // Split the 'object' string into NAME : VALUE pairs...
-                }
+                IJsonObjectRoot jsonObject = JsonTokenizer.Extract(json);
+
+                return (T) jsonObject.Value;
             }
 
             return default(T);
+        }
+
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public class JsonTokenizer
+    {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="json"></param>
+        /// <returns></returns>
+        public static IJsonObjectRoot Extract(string json)
+        {
+            IJsonObjectRoot jsonObject=null;
+
+            if (!string.IsNullOrEmpty(json))
+            {
+                // Determine the type of JSON thing we're dealing with here...
+                json = json.Trim();
+
+                if (json.StartsWith("{") && json.EndsWith("}"))
+                {
+                    jsonObject = new JObject(json);
+                }
+                else if (json.StartsWith("[") && json.EndsWith("]"))
+                {
+                    jsonObject = new JArray(json);
+                }
+                else if (json.StartsWith("\"") && json.EndsWith("\""))
+                {
+                    // We got a string...
+                    jsonObject = new JString(json);
+                }
+                else if (json.Equals("true", StringComparison.OrdinalIgnoreCase) || json.Equals("false", StringComparison.OrdinalIgnoreCase))
+                {
+                    jsonObject = new JBoolean(json);
+                }
+                else if (json.Equals("null", StringComparison.OrdinalIgnoreCase))
+                {
+                    jsonObject = new JNull();
+                }
+                else
+                {
+                    // We SHOULD only have a NUMBER here...
+                }
+            }
+
+            return jsonObject;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="json"></param>
+        /// <returns></returns>
+        public static IDictionary<string, IJsonObjectRoot> ExtractProperties(string json)
+        {
+            IDictionary<string, IJsonObjectRoot> objectProps = new Dictionary<string, IJsonObjectRoot>();
+
+            if (!string.IsNullOrEmpty(json))
+            {
+                string copy = json;
+
+                while (copy.Length > 0)
+                {
+                    copy = copy.Trim();
+                    if (copy.StartsWith("\""))
+                    {
+                        copy = copy.Substring(1);
+
+                        int end = copy.IndexOf("\"");
+                        string name = copy.Substring(0, end);
+
+                        end = copy.IndexOf(":");
+                        copy = copy.Substring(end + 1).Trim();
+
+                        end = FindMatchingEndToken(copy);
+
+                        string valueString = copy.Substring(0, end);
+
+                        IJsonObjectRoot jsonObject = JsonTokenizer.Extract(valueString);
+
+                        objectProps.Add(name, jsonObject);
+
+                        copy = copy.Substring(copy.IndexOf('"', end));
+                    }
+                }
+
+            }
+
+            return objectProps;
+        }
+
+        public static int FindMatchingEndToken(string json)
+        {
+            var copy = json.Trim();
+
+            char? startToken = copy[0];
+            startToken = startToken == '{' || startToken == '[' || startToken == '"' ? startToken : null;
+
+            int tokenCount = 1;
+
+            for (int i = 1; i < copy.Length && tokenCount > 0; i++)
+            {
+                if (startToken == '{')
+                {
+                    if (copy[i] == '{')
+                        tokenCount++;
+                    else if(copy[i] == '}')
+                        tokenCount--;
+                }
+                else if (startToken == '[')
+                {
+                    if (copy[i] == '[')
+                        tokenCount++;
+                    else if (copy[i] == ']')
+                        tokenCount--;
+                }
+                else if (startToken == '"')
+                {
+                    if (copy[i] == '"')
+                        tokenCount--;
+                }
+
+                if (tokenCount == 0)
+                    return i+1;
+            }
+
+            return 0;
         }
 
     }
