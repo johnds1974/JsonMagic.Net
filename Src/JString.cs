@@ -5,20 +5,21 @@
         public JObjectType Type {
             get { return JObjectType.String; }
         }
-        public string Value { get; private set; }
 
-        object IJsonObjectRoot.Value
+        public string Object { get; private set; }
+
+        object IJsonObjectRoot.Object
         {
-            get { return Value; }
+            get { return Object; }
         }
 
-        public JString()
+        public JString() : this(null)
         {
         }
 
         public JString(string json)
         {
-            
+            Object = json;
         }
 
     }

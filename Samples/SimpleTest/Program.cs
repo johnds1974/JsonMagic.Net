@@ -32,13 +32,22 @@ namespace SimpleTest
                 string j;
                 object o;
 
-                j = JsonMagic.ToJson(new [] { 10, 20, 30 });
+//                o = JsonMagic.FromJson("[{\"$refid\":3},]");
+
+                j = JsonMagic.ToJson(new[] { "10", "10", "30" });
+                o = JsonMagic.FromJson(j);
+
+                j = JsonMagic.ToJson(model);
+                o = JsonMagic.FromJson(j);
+
+                o = new Dictionary<string, int>();
+                ((Dictionary<string, int>)o).Add("1", 1);
+
+                j = JsonMagic.ToJson(o);
                 o = JsonMagic.FromJson(j);
 
                 j = JsonMagic.ToJson(new List<int> { 1, 2, 3, 4 });
                 o = JsonMagic.FromJson(j);
-
-                j = JsonMagic.ToJson(model);
 
                 j = JsonMagic.ToJson("Hello");
 
@@ -117,6 +126,11 @@ namespace SimpleTest
 
         public string Name { get; set; }
         public IList<IGxEntity> Entities { get; set; }
+
+        public EntityModel() : this(null)
+        {
+
+        }
 
         public EntityModel(string name)
         {

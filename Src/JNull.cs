@@ -4,7 +4,7 @@
     {
         public JObjectType Type { get { return JObjectType.Null;} }
 
-        public object Value {
+        public object Object {
             get { return null; }
         }
     }

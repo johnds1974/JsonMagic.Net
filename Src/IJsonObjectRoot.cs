@@ -6,7 +6,7 @@
     public interface IJsonObjectRoot
     {
         JObjectType Type { get; }
-        object Value { get; }
+        object Object { get; }
     }
 
     /// <summary>
@@ -15,6 +15,6 @@
     /// <typeparam name="T"></typeparam>
     public interface IJsonObjectRoot<out T> : IJsonObjectRoot
     {
-        new T Value { get; }
+        new T Object { get; }
     }
 }

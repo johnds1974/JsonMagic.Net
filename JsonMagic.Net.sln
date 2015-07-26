@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JsonMagic.Net", "JsonMagic.Net.csproj", "{85278876-D2F2-440B-95CF-0940529E667A}"
-EndProject
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{81CED1A9-2090-4C04-9CA4-5087BF0765EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JsonMagic.Net", "JsonMagic.Net.csproj", "{85278876-D2F2-440B-95CF-0940529E667A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleTest", "Samples\SimpleTest\SimpleTest.csproj", "{CA7167C1-0CF7-4BBB-8A1F-53AAD9018493}"
 EndProject

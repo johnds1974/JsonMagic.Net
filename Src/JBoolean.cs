@@ -4,11 +4,11 @@
     {
         public JObjectType Type { get { return JObjectType.Bool; } }
 
-        public bool Value { get; private set; }
+        public bool Object { get; private set; }
 
-        object IJsonObjectRoot.Value
+        object IJsonObjectRoot.Object
         {
-            get { return Value; }
+            get { return Object; }
         }
 
         public JBoolean() : this(null)

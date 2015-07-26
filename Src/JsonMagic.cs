@@ -13,7 +13,6 @@ namespace Sdr.JsonMagic
     public class JsonMagic
     {
         private static StringBuilder _jsonString;
-        private static IDictionary<object, int> _refsDict;
 
         /// <summary>
         /// 
@@ -22,8 +21,9 @@ namespace Sdr.JsonMagic
         /// <returns></returns>
         public static string ToJson(object o)
         {
+            JsonReferenceHolder.Reset();
+
             _jsonString = new StringBuilder();
-            _refsDict = new Dictionary<object, int>();
 
             _jsonString.Append(ToJsonInternal(o));
 
@@ -35,7 +35,7 @@ namespace Sdr.JsonMagic
         /// </summary>
         /// <param name="o"></param>
         /// <returns></returns>
-        private static string ToJsonInternal(object o, bool isRoot=true, bool isAssigneeSealed=true)
+        private static string ToJsonInternal(object o)
         {
             StringBuilder sb = new StringBuilder();
 
@@ -43,19 +43,22 @@ namespace Sdr.JsonMagic
             {
                 Type type = o.GetType();
 
+                #region WRITE and STORE REFERENCE ID
                 if (!(o is string) && !type.IsPrimitive)
                 {
-                    if (_refsDict.ContainsKey(o))
+                    if (JsonReferenceHolder.ContainsObject(o))
                     {
-                        sb.Append(string.Format("{{\"$refid\": {0}}}", _refsDict[o]));
+                        sb.Append(string.Format("{{\"$refid\": {0}}}", JsonReferenceHolder.GetId(o)));
                         return sb.ToString();
                     }
                     else
                     {
-                        _refsDict.Add(o, _refsDict.Count + 1);
+                        JsonReferenceHolder.Add(o);
                     }
                 }
+                #endregion
 
+                #region WRITE OPENING TAG
                 if (type.IsArray)
                 {
                     sb.Append("[");
@@ -66,16 +69,16 @@ namespace Sdr.JsonMagic
                     {
                         sb.Append("\"");
                     }
-                    //else if (o is IEnumerable)
-                    //{
-                    //    sb.Append("[");
-                    //}
                     else
                     {
-                        if (isRoot || !isAssigneeSealed)
+                        if (!type.IsSealed)
                         {
                             sb.Append(string.Format(
-                                "{{\"$type\": \"{0}\", \"$id\": {1},", GetShortTypeName(type), _refsDict[o]));
+                                "{{\"$type\": \"{0}\", \"$id\": {1},", GetShortTypeName(type), JsonReferenceHolder.GetId(o)));
+                        }
+                        else
+                        {
+                            sb.Append("{ ");
                         }
                     }
                 }
@@ -89,13 +92,14 @@ namespace Sdr.JsonMagic
                         sb.Append("{");
                     }
                 }
+                #endregion
 
-
+                #region WRITE DATA
                 if (type.IsArray)
                 {
                     foreach (var item in (Array)o)
                     {
-                        sb.AppendFormat("{0},", ToJsonInternal(item, false));
+                        sb.AppendFormat("{0},", ToJsonInternal(item));
                     }
                 }
                 else if(type.IsClass) 
@@ -106,14 +110,20 @@ namespace Sdr.JsonMagic
                     }
                     else
                     {
-                        if (o is IEnumerable)
+                        if (o is IDictionary)
+                        {
+                            IDictionary dict = o as IDictionary;
+                            sb.Append(string.Format("\"$keys\": {0},", ToJsonInternal(ToArray(dict.Keys))));
+                            sb.Append(string.Format("\"$values\": {0}", ToJsonInternal(ToArray(dict.Values))));
+                        }
+                        else if (o is IEnumerable)
                         {
                             sb.Append("\"$items\": [");
 
                             // Go through each item in the Enumerable, and Jsonize it...
                             foreach (var item in (IEnumerable)o)
                             {
-                                sb.Append(string.Format("{0},", ToJsonInternal(item, false, false)));
+                                sb.Append(string.Format("{0},", ToJsonInternal(item)));
                             }
 
                             sb.Append("]");
@@ -126,12 +136,13 @@ namespace Sdr.JsonMagic
                             foreach (var propertyInfo in props)
                             {
                                 sb.Append(
-                                    string.Format("\"{0}\": {1},", 
-                                        propertyInfo.Name, 
+                                    string.Format("\"{0}\": {1},",
+                                        propertyInfo.Name,
                                         ToJsonInternal(
-                                            propertyInfo.GetValue(o, null),
-                                            false,
-                                            propertyInfo.PropertyType.IsSealed)));
+                                            propertyInfo.GetValue(o, null)/*,
+                                            propertyInfo.PropertyType.IsSealed*/
+                                        ))
+                                    );
                             }
                         }
                     }
@@ -156,8 +167,9 @@ namespace Sdr.JsonMagic
                         }
                     }
                 }
+                #endregion
 
-
+                #region WRITE CLOSING TAG
                 if (type.IsArray)
                 {
                     sb.Append("]");
@@ -183,11 +195,23 @@ namespace Sdr.JsonMagic
                         sb.Append("}");
                     }
                 }
-
+                #endregion
 
             }
 
             return sb.ToString();
+        }
+
+        private static object[] ToArray(IEnumerable list)
+        {
+
+            if (list != null)
+            {
+                object[] array = list.Cast<object>().ToArray();
+                return array;
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -195,7 +219,7 @@ namespace Sdr.JsonMagic
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static string GetShortTypeName(Type type)
+        private static string GetShortTypeName(Type type)
         {
             if (type != null)
             {
@@ -232,9 +256,11 @@ namespace Sdr.JsonMagic
         {
             if (!string.IsNullOrEmpty(json))
             {
+                JsonReferenceHolder.Reset();
+
                 IJsonObjectRoot jsonObject = JsonTokenizer.Extract(json);
 
-                return (T) jsonObject.Value;
+                return (T) jsonObject.Object;
             }
 
             return default(T);
@@ -272,6 +298,7 @@ namespace Sdr.JsonMagic
                 else if (json.StartsWith("\"") && json.EndsWith("\""))
                 {
                     // We got a string...
+                    json = json.TrimStart('"').TrimEnd('"');
                     jsonObject = new JString(json);
                 }
                 else if (json.Equals("true", StringComparison.OrdinalIgnoreCase) || json.Equals("false", StringComparison.OrdinalIgnoreCase))
@@ -284,7 +311,20 @@ namespace Sdr.JsonMagic
                 }
                 else
                 {
-                    // We SHOULD only have a NUMBER here...
+                    // We SHOULD only have a NUMBER, either an integer or a floating-point...
+                    int intValue;
+                    if (int.TryParse(json, out intValue))
+                    {
+                        jsonObject = new JInteger(json);
+                    }
+                    else
+                    {
+                        double dblValue;
+                        if (double.TryParse(json, out dblValue))
+                        {
+                            jsonObject = new JDouble(json);
+                        }
+                    }
                 }
             }
 
@@ -304,12 +344,14 @@ namespace Sdr.JsonMagic
             {
                 string copy = json;
 
-                while (copy.Length > 0)
+                while (true)
                 {
-                    copy = copy.Trim();
-                    if (copy.StartsWith("\""))
+                    // Find the first "
+                    int index = copy.IndexOf('"');
+
+                    if (index >= 0)
                     {
-                        copy = copy.Substring(1);
+                        copy = copy.Substring(index + 1);
 
                         int end = copy.IndexOf("\"");
                         string name = copy.Substring(0, end);
@@ -319,13 +361,19 @@ namespace Sdr.JsonMagic
 
                         end = FindMatchingEndToken(copy);
 
-                        string valueString = copy.Substring(0, end);
+                        string valueString = copy.Substring(end);
 
                         IJsonObjectRoot jsonObject = JsonTokenizer.Extract(valueString);
 
                         objectProps.Add(name, jsonObject);
 
-                        copy = copy.Substring(copy.IndexOf('"', end));
+                        copy = copy.Substring(end);
+
+//                        copy = copy.Substring(copy.IndexOf('"', end));
+                    }
+                    else
+                    {
+                        break;
                     }
                 }
 
@@ -364,9 +412,16 @@ namespace Sdr.JsonMagic
                     if (copy[i] == '"')
                         tokenCount--;
                 }
+                else
+                {
+                    // we are encountering either 'true/false' or 'null' or a number +-10 or +-10.55
+                    // If we reach a SPACE or COMMA then were at the end of this value...
+                    if (copy[i] == ',' || copy[i] == ' ')
+                        tokenCount--;
+                }
 
                 if (tokenCount == 0)
-                    return i+1;
+                    return i + (startToken.HasValue ? 1 : 0);
             }
 
             return 0;
